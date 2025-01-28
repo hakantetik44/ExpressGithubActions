@@ -1,0 +1,368 @@
+name: AliExpress_E2E Test Automation
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  schedule:
+    - cron: '0 0 * * *'  # Her gece yarısı çalışır
+
+# Top level permissions for all jobs
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+  checks: write
+  actions: write
+  deployments: write
+  statuses: write
+  issues: write
+  pull-requests: write
+  security-events: write
+
+# Configure GitHub Pages at repository level
+env:
+  GITHUB_PAGES: true
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+jobs:
+  setup:
+    name: 🛠️ Ortam Hazırlığı
+    runs-on: ubuntu-latest
+    outputs:
+      chrome-version: ${{ steps.chrome-version.outputs.version }}
+    
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: ☕ Set up JDK 21
+      uses: actions/setup-java@v4
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+        cache: maven
+    
+    - name: 📦 Maven Cache
+      uses: actions/cache@v4
+      with:
+        path: ~/.m2
+        key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+        restore-keys: ${{ runner.os }}-m2
+    
+    - name: 🖥️ Test Ortamı Hazırlığı
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y xvfb
+        Xvfb :99 -screen 0 1920x1080x24 > /dev/null 2>&1 &
+        echo "export DISPLAY=:99" >> ~/.bashrc
+        source ~/.bashrc
+    
+    - name: 🌐 Chrome Kurulumu
+      uses: browser-actions/setup-chrome@latest
+      with:
+        chrome-version: stable
+    
+    - name: 🚗 ChromeDriver Kurulumu
+      uses: nanasess/setup-chromedriver@master
+    
+    - name: ℹ️ Chrome Versiyonu Kontrolü
+      id: chrome-version
+      run: |
+        version=$(google-chrome --version | cut -d ' ' -f 3)
+        echo "version=$version" >> $GITHUB_OUTPUT
+        echo "Chrome Version: $version"
+        chromedriver --version
+
+  test:
+    name: 🧪 Test Çalıştırma
+    needs: setup
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: ☕ JDK Kurulumu
+      uses: actions/setup-java@v4
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+        cache: maven
+    
+    - name: 🖥️ Test Ortamı Hazırlığı
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y xvfb
+        Xvfb :99 -screen 0 1920x1080x24 > /dev/null 2>&1 &
+        echo "export DISPLAY=:99" >> ~/.bashrc
+        source ~/.bashrc
+    
+    - name: 🌐 Chrome Kurulumu
+      uses: browser-actions/setup-chrome@latest
+      with:
+        chrome-version: stable
+    
+    - name: 🚗 ChromeDriver Kurulumu
+      uses: nanasess/setup-chromedriver@master
+    
+    - name: 📊 Allure Kurulumu
+      run: |
+        curl -o allure-2.24.0.tgz -OL https://repo.maven.apache.org/maven2/io/qameta/allure/allure-commandline/2.24.0/allure-commandline-2.24.0.tgz
+        sudo tar -zxvf allure-2.24.0.tgz -C /opt/
+        sudo ln -s /opt/allure-2.24.0/bin/allure /usr/bin/allure
+        allure --version
+    
+    - name: 🚀 Testleri Çalıştır
+      env:
+        DISPLAY: :99
+        ALLURE_RESULTS_DIR: target/allure-results
+      run: |
+        echo "Test başlangıç zamanı: $(date '+%Y-%m-%d %H:%M:%S')"
+        echo "Test ortamı: Ubuntu-latest"
+        echo "Java versiyonu: $(java -version 2>&1 | head -n 1)"
+        echo "Chrome versiyonu: ${{ needs.setup.outputs.chrome-version }}"
+        
+        # Test çalıştırma
+        mvn clean test \
+        -Dmaven.test.failure.ignore=true \
+        -Dallure.results.directory=${ALLURE_RESULTS_DIR} \
+        -Dallure.link.tms.pattern=https://example.com/tms/{} \
+        -Dallure.link.issue.pattern=https://github.com/${{ github.repository }}/issues/{} \
+        -Dallure.report.clean=true \
+        -Dallure.results.directory=${ALLURE_RESULTS_DIR}
+        
+        echo "Test bitiş zamanı: $(date '+%Y-%m-%d %H:%M:%S')"
+      continue-on-error: true
+    
+    - name: 📈 Allure Raporu Oluştur
+      if: always()
+      run: |
+        # Executor bilgilerini ekle
+        echo '{
+          "name": "GitHub Actions",
+          "type": "github",
+          "reportName": "AliExpress Test Raporu",
+          "buildName": "Build #${{ github.run_number }}",
+          "buildUrl": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+          "reportUrl": "https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}",
+          "buildOrder": "${{ github.run_number }}",
+          "timestamp": "'$(date +%s%3N)'"
+        }' > target/allure-results/executor.json
+        
+        # Ortam bilgilerini ekle
+        echo '{
+          "name": "test",
+          "values": [
+            { "name": "OS", "value": "Ubuntu-latest" },
+            { "name": "Browser", "value": "Chrome ${{ needs.setup.outputs.chrome-version }}" },
+            { "name": "Java", "value": "21" },
+            { "name": "Branch", "value": "${{ github.ref_name }}" },
+            { "name": "Commit", "value": "${{ github.sha }}" }
+          ]
+        }' > target/allure-results/categories.json
+        
+        # Environment bilgilerini ekle
+        echo '{
+          "Browser": "Chrome ${{ needs.setup.outputs.chrome-version }}",
+          "Browser.Version": "${{ needs.setup.outputs.chrome-version }}",
+          "Java.Version": "21",
+          "OS": "Ubuntu-latest",
+          "Branch": "${{ github.ref_name }}",
+          "Commit": "${{ github.sha }}",
+          "Test Runner": "TestNG",
+          "Build": "#${{ github.run_number }}"
+        }' > target/allure-results/environment.properties
+        
+        # Raporu oluştur
+        allure generate ${ALLURE_RESULTS_DIR} --clean -o target/site/allure-maven-plugin
+        
+        echo "Allure raporu oluşturuldu:"
+        ls -la target/site/allure-maven-plugin/
+    
+    - name: 📦 Test Sonuçlarını Yükle
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-results
+        path: |
+          target/
+        retention-days: 30
+
+  report:
+    name: 📊 Rapor Oluşturma
+    needs: [setup, test]
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: 📥 Test Sonuçlarını İndir
+      uses: actions/download-artifact@v4
+      with:
+        name: test-results
+        path: target
+    
+    - name: 📊 Allure Kurulumu
+      run: |
+        curl -o allure-2.24.0.tgz -OL https://repo.maven.apache.org/maven2/io/qameta/allure/allure-commandline/2.24.0/allure-commandline-2.24.0.tgz
+        sudo tar -zxvf allure-2.24.0.tgz -C /opt/
+        sudo ln -s /opt/allure-2.24.0/bin/allure /usr/bin/allure
+        allure --version
+    
+    - name: 📈 Allure Raporu Oluştur
+      run: |
+        allure generate target/allure-results --clean -o target/site/allure-maven-plugin
+        echo "Allure raporu oluşturuldu:"
+        ls -la target/site/allure-maven-plugin/
+    
+    - name: 📜 Test Raporlarını Yükle
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-reports
+        path: |
+          target/site/allure-maven-plugin/
+        retention-days: 30
+    
+    - name: 📝 Test Özeti
+      run: |
+        echo "# 🚀 Test Çalıştırma Raporu" >> $GITHUB_STEP_SUMMARY
+        echo "## 📊 Test Sonuçları" >> $GITHUB_STEP_SUMMARY
+        echo "| Metrik | Değer |" >> $GITHUB_STEP_SUMMARY
+        echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+        echo "| 🏗️ Build Numarası | #${{ github.run_number }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| 📅 Tarih | $(date '+%Y-%m-%d %H:%M:%S') |" >> $GITHUB_STEP_SUMMARY
+        echo "| 🌿 Branch | ${{ github.ref_name }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| 📌 Commit | ${GITHUB_SHA::7} |" >> $GITHUB_STEP_SUMMARY
+        echo "| 👤 Tetikleyen | ${{ github.actor }} |" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 📊 Test İstatistikleri" >> $GITHUB_STEP_SUMMARY
+        echo "| Durum | Sayı |" >> $GITHUB_STEP_SUMMARY
+        echo "|--------|------|" >> $GITHUB_STEP_SUMMARY
+        echo "| ✅ Başarılı | $(grep -c "status='PASS'" target/surefire-reports/testng-results.xml || echo 0) |" >> $GITHUB_STEP_SUMMARY
+        echo "| ❌ Başarısız | $(grep -c "status='FAIL'" target/surefire-reports/testng-results.xml || echo 0) |" >> $GITHUB_STEP_SUMMARY
+        echo "| ⏭️ Atlanan | $(grep -c "status='SKIP'" target/surefire-reports/testng-results.xml || echo 0) |" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 🔍 Test Ortamı" >> $GITHUB_STEP_SUMMARY
+        echo "| Bileşen | Versiyon |" >> $GITHUB_STEP_SUMMARY
+        echo "|----------|----------|" >> $GITHUB_STEP_SUMMARY
+        echo "| 🖥️ İşletim Sistemi | Ubuntu-latest |" >> $GITHUB_STEP_SUMMARY
+        echo "| ☕ Java | 21 |" >> $GITHUB_STEP_SUMMARY
+        echo "| 🌐 Chrome | ${{ needs.setup.outputs.chrome-version }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| 🧪 Test Framework | TestNG |" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 📊 Allure Raporu" >> $GITHUB_STEP_SUMMARY
+        echo "📱 [Detaylı Test Raporu](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }})" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 🔗 Bağlantılar" >> $GITHUB_STEP_SUMMARY
+        echo "- 🏗️ [Build Detayları](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})" >> $GITHUB_STEP_SUMMARY
+        echo "- 📊 [Test Raporu](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }})" >> $GITHUB_STEP_SUMMARY
+        echo "- 📝 [Commit Detayları](https://github.com/${{ github.repository }}/commit/${{ github.sha }})" >> $GITHUB_STEP_SUMMARY
+
+  pages:
+    name: 🌐 GitHub Pages
+    needs: report
+    runs-on: ubuntu-latest
+    if: always()
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    
+    # Specific permissions for this job
+    permissions:
+      pages: write
+      id-token: write
+      contents: write
+      deployments: write
+    
+    steps:
+    - name: 🔄 Checkout Repository
+      uses: actions/checkout@v4
+    
+    - name: 📥 Test Raporlarını İndir
+      uses: actions/download-artifact@v4
+      with:
+        name: test-reports
+        path: target/site/allure-maven-plugin
+    
+    - name: 📂 List Files
+      run: |
+        echo "Current directory contents:"
+        ls -la
+        echo "Target directory contents:"
+        ls -la target/site/allure-maven-plugin || echo "Target directory not found"
+    
+    - name: 🔧 Setup Pages
+      id: pages
+      uses: actions/configure-pages@v4
+      with:
+        enablement: true
+        token: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: 📤 Upload Artifact
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: target/site/allure-maven-plugin
+        retention-days: 30
+
+  deploy:
+    name: 🚀 Rapor Yayınlama
+    needs: pages
+    runs-on: ubuntu-latest
+    if: always()
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    
+    # Specific permissions for this job
+    permissions:
+      pages: write
+      id-token: write
+      deployments: write
+      statuses: write
+    
+    steps:
+    - name: 🌐 Deploy to GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        path: target/site/allure-maven-plugin
+
+    - name: ✅ Verify Deployment
+      if: success()
+      run: |
+        echo "Deployment successful!"
+        echo "Report URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}"
+        
+    - name: ❌ Deployment Status
+      if: failure()
+      run: |
+        echo "Deployment failed!"
+        echo "Error details:"
+        echo "- Job status: ${{ job.status }}"
+        echo "- Previous job status: ${{ needs.pages.result }}"
+
+  notify:
+    name: 📢 Bildirim Gönderme
+    needs: [test, deploy]
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+    - name: 📋 Durum Kontrolü
+      run: |
+        if [[ "${{ needs.test.result }}" == "success" ]]; then
+          echo "## ✅ Testler Başarıyla Tamamlandı" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "## ❌ Test Hatası Tespit Edildi" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        if [[ "${{ needs.deploy.result }}" == "success" ]]; then
+          echo "## 🌐 Rapor Başarıyla Yayınlandı" >> $GITHUB_STEP_SUMMARY
+          echo "📊 [Allure Raporu](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }})" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "## ⚠️ Rapor Yayınlama Hatası" >> $GITHUB_STEP_SUMMARY
+        fi 
