@@ -1,104 +1,140 @@
-# 🛍️ AliExpress Test Automation
+# 🛍️ AliExpress E2E Test Automation Framework
 
-<div align="center">
+![Java](https://img.shields.io/badge/Java-21-orange.svg)
+![Selenium](https://img.shields.io/badge/Selenium-4.16.1-green.svg)
+![TestNG](https://img.shields.io/badge/TestNG-7.8.0-blue.svg)
+![Allure](https://img.shields.io/badge/Allure-2.24.0-yellow.svg)
 
-[![Java](https://img.shields.io/badge/Java-21-orange.svg?style=for-the-badge&logo=java)](https://www.oracle.com/java/)
-[![Selenium](https://img.shields.io/badge/Selenium-4.16.1-green.svg?style=for-the-badge&logo=selenium)](https://www.selenium.dev/)
-[![TestNG](https://img.shields.io/badge/TestNG-7.8.0-orange.svg?style=for-the-badge&logo=testng)](https://testng.org/)
-[![Maven](https://img.shields.io/badge/Maven-3.8.1-red.svg?style=for-the-badge&logo=apache-maven)](https://maven.apache.org/)
-[![Allure](https://img.shields.io/badge/Allure-2.24.0-yellow.svg?style=for-the-badge&logo=qameta)](http://allure.qatools.ru/)
-[![GitHub Actions](https://img.shields.io/badge/GitHub%20Actions-CI/CD-blue.svg?style=for-the-badge&logo=github-actions)](https://github.com/features/actions)
-[![Log4j2](https://img.shields.io/badge/Log4j2-2.20.0-blue.svg?style=for-the-badge&logo=apache)](https://logging.apache.org/log4j/2.x/)
+## 📋 Table of Contents
+- [Overview](#overview)
+- [Features](#features)
+- [Tech Stack](#tech-stack)
+- [Project Structure](#project-structure)
+- [Prerequisites](#prerequisites)
+- [Installation](#installation)
+- [Running Tests](#running-tests)
+- [Test Reports](#test-reports)
+- [Page Objects](#page-objects)
+- [Contributing](#contributing)
 
-  <img src="https://www.selenium.dev/images/selenium_logo_square_green.png" alt="Selenium Logo" width="100"/>
-
-</div>
-
-> Automated testing framework for AliExpress using Selenium WebDriver and TestNG
+## 🔍 Overview
+This project is a robust end-to-end test automation framework for AliExpress.com, built using Java and following the Page Object Model design pattern. It includes automated test scenarios for product search functionality with detailed reporting capabilities.
 
 ## ✨ Features
+- **Page Object Model**: Maintainable and reusable code structure
+- **Allure Reporting**: Detailed test execution reports with screenshots
+- **Parallel Execution**: Support for running tests in parallel
+- **Cross-browser Testing**: Support for multiple browsers
+- **Logging**: Comprehensive logging with Log4j and SLF4J
+- **Cookie Handling**: Automated cookie consent management
+- **Error Handling**: Robust error handling and recovery mechanisms
 
-- Page Object Model design pattern
-- TestNG test framework
-- Selenium WebDriver for browser automation
-- GitHub Actions for CI/CD
-- Allure Reports for test reporting
-- Log4j for logging
+## 🛠️ Tech Stack
+- **Java 21**: Programming language
+- **Selenium WebDriver**: Web automation
+- **TestNG**: Test execution framework
+- **Allure**: Test reporting
+- **Maven**: Build and dependency management
+- **Log4j & SLF4J**: Logging framework
+- **WebDriverManager**: Browser driver management
 
-## 🔧 Prerequisites
+## 📁 Project Structure
+```
+aliexpress-e2e/
+├── src/
+│   ├── main/
+│   │   └── java/
+│   │       └── com/
+│   │           └── aliexpress/
+│   │               ├── pages/
+│   │               │   ├── BasePage.java
+│   │               │   ├── HomePage.java
+│   │               │   └── SearchResultsPage.java
+│   │               └── utils/
+│   │                   └── Constants.java
+│   └── test/
+│       ├── java/
+│       │   └── com/
+│       │       └── aliexpress/
+│       │           └── tests/
+│       │               └── SearchTest.java
+│       └── resources/
+│           ├── log4j2.xml
+│           └── testng.xml
+└── pom.xml
+```
 
-- Java JDK 21 or higher
-- Maven 3.6 or higher
-- Chrome browser
-- Git
+## 📋 Prerequisites
+- Java Development Kit (JDK) 21
+- Maven 3.8.x or higher
+- Chrome/Firefox browser
+- Allure command-line tools (for reports)
 
-## 🚀 Getting Started
-
+## 🚀 Installation
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/aliexpress-test-automation.git
+git clone https://github.com/yourusername/aliexpress-e2e.git
 ```
 
-2. Navigate to project directory:
+2. Install dependencies:
 ```bash
-cd aliexpress-test-automation
+mvn clean install
 ```
 
-3. Run tests:
+3. Install Allure (macOS):
+```bash
+brew install allure
+```
+
+## 🏃‍♂️ Running Tests
+### Run all tests:
 ```bash
 mvn clean test
 ```
 
-## 🏗️ Project Structure
-
-```
-src
-├── test
-│   ├── java
-│   │   ├── pages          # Page Object classes
-│   │   ├── tests          # Test classes
-│   │   └── utils          # Utility classes and constants
-│   └── resources
-│       └── log4j2.xml     # Logging configuration
+### Run specific test class:
+```bash
+mvn test -Dtest=SearchTest
 ```
 
-## 🧪 Test Cases
-
-Currently implemented test scenarios:
-- Search functionality test
-  - Navigate to homepage
-  - Search for a product
-  - Verify search results
+### Generate and view Allure report:
+```bash
+mvn allure:serve
+```
 
 ## 📊 Test Reports
+Allure reports provide detailed test execution information including:
+- Test execution summary
+- Step-by-step test execution details
+- Screenshots on failures
+- Test execution time
+- Environment details
 
-Test reports are automatically generated after each test run:
-- Allure reports are available in `target/site/allure-maven-plugin`
-- TestNG reports are available in `target/surefire-reports`
+## 📑 Page Objects
+### HomePage
+- Navigation to AliExpress homepage
+- Cookie consent handling
+- Product search functionality
 
-## 🔄 Continuous Integration
-
-This project uses GitHub Actions for continuous integration. The workflow:
-- Triggers on push to main/master branch
-- Runs tests in headless mode
-- Uploads test results as artifacts
-
-## 📝 Configuration
-
-Key configuration files:
-- `pom.xml`: Maven dependencies and build configuration
-- `.github/workflows/test.yml`: GitHub Actions workflow
-- `src/test/resources/log4j2.xml`: Logging configuration
+### SearchResultsPage
+- Product listing verification
+- Product selection
+- Search result filtering
 
 ## 🤝 Contributing
-
 1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
-## 📜 License
+## 📝 License
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details
-# ExpressGithubActions
+## 👥 Authors
+- Your Name - *Initial work* - [YourGitHub](https://github.com/yourusername)
+
+## 🙏 Acknowledgments
+- Selenium WebDriver team
+- TestNG team
+- Allure Framework team
