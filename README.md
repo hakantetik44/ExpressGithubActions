@@ -5,6 +5,8 @@
 ![TestNG](https://img.shields.io/badge/TestNG-7.8.0-blue.svg)
 ![Allure](https://img.shields.io/badge/Allure-2.24.0-yellow.svg)
 
+![AliExpress Banner](https://via.placeholder.com/800x200.png?text=AliExpress+E2E+Test+Automation)
+
 ## 📋 Table of Contents
 - [Overview](#overview)
 - [Features](#features)
@@ -18,16 +20,16 @@
 - [Contributing](#contributing)
 
 ## 🔍 Overview
-This project is a robust end-to-end test automation framework for AliExpress.com, built using Java and following the Page Object Model design pattern. It includes automated test scenarios for product search functionality with detailed reporting capabilities.
+This project is a robust end-to-end test automation framework for AliExpress.com, built using Java and following the Page Object Model design pattern. It includes automated test scenarios for product search functionality with detailed reporting capabilities. The framework aims to streamline the testing process, ensuring high-quality software delivery.
 
 ## ✨ Features
-- **Page Object Model**: Maintainable and reusable code structure
-- **Allure Reporting**: Detailed test execution reports with screenshots
-- **Parallel Execution**: Support for running tests in parallel
-- **Cross-browser Testing**: Support for multiple browsers
-- **Logging**: Comprehensive logging with Log4j and SLF4J
-- **Cookie Handling**: Automated cookie consent management
-- **Error Handling**: Robust error handling and recovery mechanisms
+- **Page Object Model**: Maintainable and reusable code structure, allowing easy updates and scalability.
+- **Allure Reporting**: Detailed test execution reports with screenshots, providing insights into test results and failures.
+- **Parallel Execution**: Support for running tests in parallel, reducing overall test execution time.
+- **Cross-browser Testing**: Support for multiple browsers, ensuring compatibility across different environments.
+- **Logging**: Comprehensive logging with Log4j and SLF4J, aiding in debugging and monitoring.
+- **Cookie Handling**: Automated cookie consent management, ensuring compliance with privacy regulations.
+- **Error Handling**: Robust error handling and recovery mechanisms, minimizing test failures due to unexpected issues.
 
 ## 🛠️ Tech Stack
 - **Java 21**: Programming language
@@ -64,69 +66,47 @@ aliexpress-e2e/
 └── pom.xml
 ```
 
-## 📋 Prerequisites
-- Java Development Kit (JDK) 21
-- Maven 3.8.x or higher
-- Chrome/Firefox browser
-- Allure command-line tools (for reports)
+## 🛠️ Prerequisites
+- Java 21 or later
+- Maven 3.6+
+- A web browser (Chrome, Firefox, etc.)
 
 ## 🚀 Installation
 1. Clone the repository:
+   ```bash
+   git clone https://github.com/yourusername/aliexpress-e2e.git
+   ```
+2. Navigate to the project directory:
+   ```bash
+   cd aliexpress-e2e
+   ```
+3. Install dependencies:
+   ```bash
+   mvn clean install
+   ```
+
+## 🏃 Running Tests
+To execute tests, run the following command:
 ```bash
-git clone https://github.com/yourusername/aliexpress-e2e.git
+mvn test
 ```
 
-2. Install dependencies:
-```bash
-mvn clean install
-```
-
-3. Install Allure (macOS):
-```bash
-brew install allure
-```
-
-## 🏃‍♂️ Running Tests
-### Run all tests:
-```bash
-mvn clean test
-```
-
-### Run specific test class:
-```bash
-mvn test -Dtest=SearchTest
-```
-
-### Generate and view Allure report:
+## 📊 Test Reports
+After running tests, generate the Allure report:
 ```bash
 mvn allure:serve
 ```
 
-## 📊 Test Reports
-Allure reports provide detailed test execution information including:
-- Test execution summary
-- Step-by-step test execution details
-- Screenshots on failures
-- Test execution time
-- Environment details
-
-## 📑 Page Objects
-### HomePage
-- Navigation to AliExpress homepage
-- Cookie consent handling
-- Product search functionality
-
-### SearchResultsPage
-- Product listing verification
-- Product selection
-- Search result filtering
+## 🧩 Page Objects
+The framework uses the Page Object Model to organize code. Each page of the application is represented by a class.
 
 ## 🤝 Contributing
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+Contributions are welcome! Please follow these steps:
+1. Fork the repository.
+2. Create a new branch (`git checkout -b feature/YourFeature`)
+3. Commit your changes (`git commit -m 'Add some feature'`)
+4. Push to the branch (`git push origin feature/YourFeature`)
+5. Open a pull request.
 
 ## 📝 License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
