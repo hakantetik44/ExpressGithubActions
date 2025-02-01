@@ -190,6 +190,29 @@ jobs:
           target/
         retention-days: 30
 
+    - name: 📹 Run Tests with Video Recording
+      run: |
+        # Command to run your tests with video recording enabled
+        # Example for a test framework like Cypress
+        npm run test:record
+
+    - name: 📦 Collect Video Files
+      run: |
+        # Assuming videos are stored in a directory like 'videos/'
+        mkdir -p allure-results/videos
+        cp -r videos/* allure-results/videos/
+
+    - name: 📊 Generate Allure Report
+      run: |
+        # Command to generate Allure report
+        allure generate allure-results --clean -o allure-report
+
+    - name: 📤 Upload Allure Report
+      uses: actions/upload-artifact@v3
+      with:
+        name: allure-report
+        path: allure-report/**
+
   report:
     name: 📊 Rapor Oluşturma
     needs: [setup, test]
